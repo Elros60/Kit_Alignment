@@ -331,41 +331,21 @@ void mchAlignment_Match(std::string prefix, std::string mchFileName= "mchtracks.
   // Main loop for alignement process //
   //////////////////////////////////////
 
-  cout << "Start processing..." << endl;
   cout <<endl;
   int tracksGood = 0;
   int tracksGoodwithoutFit = 0;
   int tracksAll = 0;
   int trackMCHMID = 0;
 
+  cout << "Start tracks processing..." << endl;
+  cout << "=============================================================="
+          "======"
+          "==="
+       << endl;
+
   // processing for each track
   while (mchReader->Next()&&muonReader->Next()) {
     int id_event = mchReader->GetCurrentEntry();
-    cout << "=========================================================="
-                "===="
-                "=="
-                "======="
-             << endl;
-
-    cout << "=========================================================="
-                "===="
-                "=="
-                "======="
-             << endl;         
-    cout << "Start reading event: " << id_event <<endl;
-    tracksAll += mchTracks->size();
-    cout << "   "<< mchROFs->size() << " MCH ROF records loaded..." <<endl;
-    cout << "   "<< mchTracks->size() << " MCH tracks loaded..." <<endl;
-    cout << "=========================================================="
-                "===="
-                "=="
-                "======="
-             << endl;
-    cout << "=========================================================="
-                "===="
-                "=="
-                "======="
-             << endl;
     for (const auto &mchROF : *mchROFs) {
 
       for (int iMCHTrack = mchROF.getFirstIdx();
@@ -384,40 +364,20 @@ void mchAlignment_Match(std::string prefix, std::string mchFileName= "mchtracks.
         if(nb_clusters <= 9) continue;
         tracksGoodwithoutFit += 1;
 
-        cout << "=========================================================="
-                "===="
-                "=="
-                "======="
-                << endl;
-        cout << "Start processing for track: " << id_track << " at event: "<< id_event <<endl;
-
-        cout << nb_clusters << " clusters attached for track " << id_track << endl;
-
-
         // Format conversion from TrackMCH to Track(MCH internal use)
         mch::Track convertedTrack = MCHFormatConvert(mchTrack, *mchClusters, doReAlign);
 
         
         // Erase removable track
         if(RemoveTrack(convertedTrack, ImproveCut)){
-          LOG(info) << "Current track has been excluded for alignment process.";
           continue;
         }else{
-          LOG(info) << "Current track is being considered into alignment process.";
           tracksGood += 1;
-        }
-        
+        }   
 
         //  Track processing, saving residuals
         AliMillePedeRecord *mchRecord = test_align->ProcessTrack(
             convertedTrack, transformation, doAlign, weightRecord);
-
-        cout << "Processing done for track: " << iMCHTrack << endl;
-        cout << "=========================================================="
-                "===="
-                "=="
-                "======="
-             << endl;
         
       }
     }
@@ -426,7 +386,6 @@ void mchAlignment_Match(std::string prefix, std::string mchFileName= "mchtracks.
     cout << endl;
 
   }
-
 
 
   cout << "Start global fitting..." << endl;
@@ -439,17 +398,6 @@ void mchAlignment_Match(std::string prefix, std::string mchFileName= "mchtracks.
   // Process global fit for each track
   if(doAlign) test_align->GlobalFit(params, errors, pulls);
 
-
-  
-  cout << "=============================================================="
-          "======"
-          "==="
-       << endl;
-  cout << "Global fitting done." << endl;
-  cout << "=============================================================="
-          "======"
-          "==="
-       << endl;
 
   cout <<endl;
   cout <<endl;
@@ -497,8 +445,6 @@ void mchAlignment_Match(std::string prefix, std::string mchFileName= "mchtracks.
 
   // Close files and store all tracks' records
   test_align->terminate();
-  LOG(info) << "Alignment finished";
-  LOG(info) << "Test done!";
 
 }
 
@@ -508,8 +454,6 @@ void mchAlignment_Match(std::string prefix, std::string mchFileName= "mchtracks.
 mch::Track MCHFormatConvert(mch::TrackMCH &mchTrack,
                             std::vector<mch::Cluster> &mchClusters, bool doReAlign) {
 
-
-  LOG(info) << "Start track format conversion...";
 
           
   mch::Track convertedTrack = mch::Track();
@@ -521,8 +465,6 @@ mch::Track MCHFormatConvert(mch::TrackMCH &mchTrack,
   // Get clusters for current track
   int id_cluster_first = mchTrack.getFirstClusterIdx();
   int id_cluster_last = mchTrack.getLastClusterIdx();
-  cout << "Current track's cluster starts at index: " << id_cluster_first
-       << " stops at: " << id_cluster_last << endl;
 
   for (int id_cluster = id_cluster_first;
        id_cluster < id_cluster_last + 1; ++id_cluster) {
@@ -634,7 +576,6 @@ bool RemoveTrack(mch::Track &track, double ImproveCut){
         param.setParameters(param.getSmoothParameters());
         param.setCovariances(param.getSmoothCovariances());
     }
-    LOG(info) << "Track has been finalised.";
   }
 
   return removeTrack;
